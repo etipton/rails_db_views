@@ -28,7 +28,7 @@ namespace :db do
 end
 
 # prepend "db" namespace
-db_tasks = %w(migrate rollback test:load test:prepare).map { |task_name| "db:#{task_name}" }
+db_tasks = %w(migrate rollback test:load test:prepare schema:load).map { |task_name| "db:#{task_name}" }
 
 db_tasks.each do |task_name|
   # Before
