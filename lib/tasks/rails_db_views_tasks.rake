@@ -1,7 +1,7 @@
 namespace :db do
 
   desc "Generate all the database views of the current project"
-  task :create_views => :environment do
+  task create_views: :environment do
     creator = RailsDbViews::DbViewsCreator.new
 
     views_path, views_ext = Rails.configuration.rails_db_views[:views_path], Rails.configuration.rails_db_views[:views_ext]
@@ -14,7 +14,7 @@ namespace :db do
   end
 
   desc "Drop all the database views of the current project"
-  task :drop_views => :environment do
+  task drop_views: :environment do
     creator = RailsDbViews::DbViewsCreator.new
 
     views_path, views_ext = Rails.configuration.rails_db_views[:views_path], Rails.configuration.rails_db_views[:views_ext]
@@ -25,28 +25,17 @@ namespace :db do
 
     creator.drop_views
   end
-
-  task :migrate => :environment do
-    Rake::Task['db:create_views'].invoke
-  end
-
-  task :rollback => :environment do
-    Rake::Task['db:create_views'].invoke
-  end
-
-  namespace :test do
-    task :load => :environment do
-      Rake::Task['db:create_views'].invoke
-    end
-
-    task :prepare => :environment do
-      Rake::Task['db:create_views'].invoke
-    end
-  end
 end
 
-# Before
-Rake::Task['db:migrate'].enhance(['db:drop_views'])
-Rake::Task['db:rollback'].enhance(['db:drop_views'])
-Rake::Task['db:test:load'].enhance(['db:drop_views'])
-Rake::Task['db:test:prepare'].enhance(['db:drop_views'])
+# prepend "db" namespace
+db_tasks = %w(migrate rollback test:load test:prepare).map { |task_name| "db:#{task_name}" }
+
+db_tasks.each do |task_name|
+  # Before
+  Rake::Task[task_name].enhance(['db:drop_views'])
+
+  # After
+  task task_name do
+    Rake::Task['db:create_views'].invoke
+  end
+end
